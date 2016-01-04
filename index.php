@@ -1,4 +1,3 @@
-tools.steinsplitter@tools-bastion-02:~/public_html/renaming$ cat index.php
 <?php
 /**
  * @author Steinsplitter / https://commons.wikimedia.org/wiki/User:Steinsplitter
@@ -39,6 +38,7 @@ window.onload = function(start) {
           <div class="nav-collapse collapse">
                 <ul id="toolbar-right" class="nav pull-right">
                <li><a href="//commons.wikimedia.org/wiki/Category:Media_requiring_renaming">Commonscat</a></li>
+               <li><a href="//github.com/Steinsplitter/File-renamers-queue/tree/master">Source</a></li>
                </ul>
           </div>
         </div>
