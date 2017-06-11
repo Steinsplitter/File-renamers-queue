@@ -1,9 +1,43 @@
 <?php
 /**
  * @author Steinsplitter / https://commons.wikimedia.org/wiki/User:Steinsplitter
- * @copyright 2015 tool authors
+ * @author Framawiki / https://commons.wikimedia.org/wiki/User:Framawiki
+ * @copyright 2017 tool authors
  * @license http://unlicense.org/ Unlicense
  */
+
+// Stats
+$hi = ( "new.txt" );
+$hii = file( $hi );
+$hii[0] ++;
+$fp = fopen( $hi , "w" );
+fputs( $fp , "$hii[0]" );
+fclose( $fp );
+
+$tools_pw = posix_getpwuid ( posix_getuid () );
+$tools_mycnf = parse_ini_file( $tools_pw['dir'] . "/replica.my.cnf" );
+$db = new mysqli( 'commonswiki.labsdb', $tools_mycnf['user'], $tools_mycnf['password'], 'commonswiki_p' );
+if ( $db->connect_errno )
+        die( "Failed to connect to labsdb: (" . $db->connect_errno . ") " . $db->connect_error );
+$r = $db->query( 'SELECT REPLACE(page_title, \'_\', \' \'), rev_user_text, DATE_FORMAT(rev_timestamp, \'%H:%i:%s %b %d %Y\') FROM page JOIN categorylinks ON page_id=cl_from JOIN revision ON page_latest = rev_id AND page_is_redirect=0 AND cl_to=\'Media_requiring_renaming\' and page_namespace = \'6\'' );
+$num = $r->num_rows;
+unset( $tools_mycnf, $tools_pw );
+$data = date('H:i:s (m-d-Y)', time());
+
+if (isset($_GET['api'])) {
+	$answer = array();
+	$elements = array();
+	while ( $row = $r->fetch_row() ) {
+		$elements[] = array('title' => utf8_encode($row[0]), 'user' => utf8_encode($row[1]), 'date' => $row[2]);
+	}
+	
+	$answer['elements'] = $elements;
+	echo json_encode($answer);
+	header('Content-Type: application/json;charset=utf-8');
+	exit(0);
+}
+
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -45,15 +79,6 @@ window.onload = function(start) {
       </div>
     </div>
   <div class="container">
-<?php
-// Stats
-$hi = ( "new.txt" );
-$hii = file( $hi );
-$hii[0] ++;
-$fp = fopen( $hi , "w" );
-fputs( $fp , "$hii[0]" );
-fclose( $fp );
-?>
 <p>This is a fast loading and easy to use interface for file renamers who are working on the queue. Only files from the maincat show up here.</p>
 <span><a href="#" onclick="location.reload(true); return false;" class ="btn btn-primary btn-success">Refresh<div id="countdown"></div></a>
 <?php if (isset($_GET['re'])): ?>
@@ -63,19 +88,9 @@ fclose( $fp );
 <?php endif; ?>
 </span><br><br>
 <?php
-$tools_pw = posix_getpwuid ( posix_getuid () );
-$tools_mycnf = parse_ini_file( $tools_pw['dir'] . "/replica.my.cnf" );
-$db = new mysqli( 'commonswiki.labsdb', $tools_mycnf['user'], $tools_mycnf['password'], 'commonswiki_p' );
-if ( $db->connect_errno )
-        die( "Failed to connect to labsdb: (" . $db->connect_errno . ") " . $db->connect_error );
-$r = $db->query( 'SELECT REPLACE(page_title, \'_\', \' \'), rev_user_text, DATE_FORMAT(rev_timestamp, \'%H:%i:%s %b %d %Y\') FROM page JOIN categorylinks ON page_id=cl_from JOIN revision ON page_latest = rev_id AND page_is_redirect=0 AND cl_to=\'Media_requiring_renaming\' and page_namespace = \'6\'' );
-$num = $r->num_rows;
-unset( $tools_mycnf, $tools_pw );
-$data = date('H:i:s (m-d-Y)', time());
 echo '<p>There are currently <b>'.$num.'</b> move requests in the queue.</p><p>Data as of '.$data.' (UTC).';
-if ( $num == 0 ) {
+if ( $num == 0 )
      echo "<div class=\"alert alert-info\"><b>No requests:</b> There are zero filemove requests. No backlog. Cool :-).</div>";
-}
 //header( 'Cache-Control: no-store, no-cache, must-revalidate' );
 ?>
 
@@ -87,7 +102,7 @@ if ( $num == 0 ) {
   </td>
   <td>
   <a href="//commons.wikimedia.org/w/index.php?title=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>">File:<?= str_replace( "_", " ", htmlspecialchars( $row[0] ) ); ?></a><br>(<a href="//commons.wikimedia.org/w/index.php?title=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>&action=history">History</a> | <a href="//commons.wikimedia.org/w/index.php?title=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>&action=edit">Edit</a> | <a href="//commons.wikimedia.org/w/index.php?title=Special:Log&page=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>">Logs</a> | <a href="//commons.wikimedia.org/w/index.php?title=Special%3AGlobalUsage&limit=50&target=<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>">Usage</a>)<br>
-  Last edited by <a href="//commons.wikimedia.org/w/index.php?title=User:<?= htmlspecialchars ( urlencode ( $row[1] ) ) ?>"><?= htmlspecialchars ( $row[1] ) ?></a> at  <?= htmlspecialchars ( $row[2] ) ?>
+  Last edited by <a href="//commons.wikimedia.org/w/index.php?title=User:<?= htmlspecialchars ( urlencode ( $row[1] ) ) ?>"><?= htmlspecialchars ( $row[1] ) ?></a> at <?= htmlspecialchars ( $row[2] ) ?>
   </td>
 </tr>
 <?php endwhile; ?>
