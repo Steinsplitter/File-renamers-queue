@@ -16,7 +16,7 @@ fclose( $fp );
 
 $tools_pw = posix_getpwuid ( posix_getuid () );
 $tools_mycnf = parse_ini_file( $tools_pw['dir'] . "/replica.my.cnf" );
-$db = new mysqli( 'commonswiki.labsdb', $tools_mycnf['user'], $tools_mycnf['password'], 'commonswiki_p' );
+$db = new mysqli( 'commonswiki.web.db.svc.eqiad.wmflabs', $tools_mycnf['user'], $tools_mycnf['password'], 'commonswiki_p' );
 if ( $db->connect_errno )
         die( "Failed to connect to labsdb: (" . $db->connect_errno . ") " . $db->connect_error );
 $r = $db->query( 'SELECT REPLACE(page_title, \'_\', \' \'), rev_user_text, DATE_FORMAT(rev_timestamp, \'%H:%i:%s %b %d %Y\') FROM page JOIN categorylinks ON page_id=cl_from JOIN revision ON page_latest = rev_id AND page_is_redirect=0 AND cl_to=\'Media_requiring_renaming\' and page_namespace = \'6\'' );
