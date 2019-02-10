@@ -96,7 +96,7 @@ if ( $num == 0 )
 <?php while ( $row = $r->fetch_row() ):?>
  <tr>
   <td width="84">
-  <img class="dfile" src="//commons.wikimedia.org/w/thumb.php?f=<?= htmlspecialchars( urlencode ( $row[0] ) ) ?>&amp;w=80&amp;p=40">
+  <img class="dfile" onerror="this.style.display = 'none'" src="//commons.wikimedia.org/w/thumb.php?f=<?= htmlspecialchars( urlencode ( $row[0] ) ) ?>&amp;w=80&amp;p=40">
   </td>
   <td>
   <a href="//commons.wikimedia.org/w/index.php?title=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>">File:<?= str_replace( "_", " ", htmlspecialchars( $row[0] ) ); ?></a><br>(<a href="//commons.wikimedia.org/w/index.php?title=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>&action=history">History</a> | <a href="//commons.wikimedia.org/w/index.php?title=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>&action=edit">Edit</a> | <a href="//commons.wikimedia.org/w/index.php?title=Special:Log&page=File:<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>">Logs</a> | <a href="//commons.wikimedia.org/w/index.php?title=Special%3AGlobalUsage&limit=50&target=<?= htmlspecialchars ( urlencode ( $row[0] ) ) ?>">Usage</a>)<br>
