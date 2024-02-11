@@ -40,8 +40,8 @@ if (isset($_GET['api'])) {
 	}
 	$answer['len'] = count($elements);
 	$answer['elements'] = $elements;
-	echo json_encode($answer);
 	header('Content-Type: application/json;charset=utf-8');
+	echo json_encode($answer);
 	exit(0);
 }
 ?>
