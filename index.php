@@ -14,21 +14,29 @@ $fp = fopen( $hi , "w" );
 fputs( $fp , "$hii[0]" );
 fclose( $fp );
 
-$tools_pw = posix_getpwuid ( posix_getuid () );
-$tools_mycnf = parse_ini_file( $tools_pw['dir'] . "/replica.my.cnf" );
-$db = new mysqli( 'commonswiki.web.db.svc.eqiad.wmflabs', $tools_mycnf['user'], $tools_mycnf['password'], 'commonswiki_p' );
-if ( $db->connect_errno )
-        die( "Failed to connect to labsdb: (" . $db->connect_errno . ") " . $db->connect_error );
-$r = $db->query( 'SELECT REPLACE(page_title, \'_\', \' \'), actor_user, DATE_FORMAT(rev_timestamp, \'%H:%i:%s %b %d %Y\') FROM page JOIN categorylinks ON page_id = cl_from JOIN revision ON page_latest = rev_id JOIN revision_actor_temp ON revactor_rev = rev_id JOIN actor_revision ON actor_id = revactor_actor WHERE page_is_redirect = 0 AND cl_to = \'Media_requiring_renaming\' AND page_namespace = \'6\'' );
-$num = $r->num_rows;
-unset( $tools_mycnf, $tools_pw );
-$data = date('H:i:s (m-d-Y)', time());
+/**
+ * Query the data from the database. Sensitive information (DB password) is stored
+ * in local variables so that it’s cleared as soon as possible.
+ */
+function query(): mysqli_result {
+	mysqli_report( MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT );
+	$tools_pw = posix_getpwuid ( posix_getuid () );
+	$tools_mycnf = parse_ini_file( $tools_pw['dir'] . "/replica.my.cnf" );
+	$db = new mysqli( 'commonswiki.web.db.svc.eqiad.wmflabs', $tools_mycnf['user'], $tools_mycnf['password'], 'commonswiki_p' );
+	$sql = <<<SQL
+		SELECT page_title, actor_name, DATE_FORMAT(rev_timestamp, '%H:%i:%s %b %d %Y')
+		FROM page JOIN categorylinks ON page_id = cl_from JOIN revision ON page_latest = rev_id JOIN actor_revision ON actor_id = rev_actor
+		WHERE page_is_redirect = 0 AND cl_to = 'Media_requiring_renaming' AND page_namespace = 6
+	SQL;
+	return $db->query( $sql );
+}
 
 if (isset($_GET['api'])) {
 	$answer = array();
 	$elements = array();
+	$r = query();
 	while ( $row = $r->fetch_row() ) {
-		$elements[] = array('title' => utf8_encode($row[0]), 'user' => utf8_encode($row[1]), 'date' => $row[2]);
+		$elements[] = array('title' => str_replace('_', ' ', $row[0]), 'user' => $row[1], 'date' => $row[2]);
 	}
 	$answer['len'] = count($elements);
 	$answer['elements'] = $elements;
@@ -86,6 +94,10 @@ window.onload = function(start) {
 <?php endif; ?>
 </span><br><br>
 <?php
+$r = query();
+$num = $r->num_rows;
+$data = date('H:i:s (m-d-Y)');
+
 echo '<p>There are currently <b>'.$num.'</b> move requests in the queue.</p><p>Data as of '.$data.' (UTC).';
 if ( $num == 0 )
      echo "<div class=\"alert alert-info\"><b>No requests:</b> There are zero filemove requests. No backlog. Cool :-).</div>";
