@@ -1,2 +1,2 @@
 # File-renamers-queue
-https://tools.wmflabs.org/steinsplitter/renaming/
+https://steinsplitter.toolforge.org/renaming/
